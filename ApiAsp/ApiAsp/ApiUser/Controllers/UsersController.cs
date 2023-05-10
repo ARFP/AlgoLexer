@@ -25,18 +25,43 @@ namespace ApiUser.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserReadViewModel>>> GetUsers()
         {
-          if (_context.Users == null)
-          {
-              return NotFound();
-          }
-            return await _context.Users.ToListAsync();
+            if (_context.Users == null)
+            {
+                  return NotFound();
+            }
+
+            List<UserReadViewModel> list = new List<UserReadViewModel>();
+
+            await _context.Users.ForEachAsync(u => {
+                UserReadViewModel r = new() { 
+                    Id = u.Id, 
+                    UserName = u.UserName
+                };
+
+                list.Add(r);
+            });
+
+            return list;
+
+            /*foreach(User u in _context.Users)
+            {
+                UserReadViewModel r = new()
+                {
+                    Id = u.Id,
+                    UserName = u.UserName
+                };
+
+                list.Add(r);
+            } */
+
+
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<UserReadViewModel>> GetUser(int id)
         {
           if (_context.Users == null)
           {
@@ -49,20 +74,42 @@ namespace ApiUser.Controllers
                 return NotFound();
             }
 
-            return user;
+            return new UserReadViewModel()
+            {
+                Id = user.Id,
+                UserName = user.UserName
+            };
         }
 
         // PUT: api/Users/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> PutUser(int id, UserUpdateViewModel user)
         {
             if (id != user.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(user).State = EntityState.Modified;
+            User dbUser = _context.Users.FirstOrDefault(u => u.Id == id);
+
+            if (dbUser is User)
+            {
+                dbUser.UserName = user.UserName;
+            }
+            else
+            {
+                return NotFound();
+            }
+
+
+            /*if (_context.Users.FirstOrDefault(u => u.Id == id) is User dbUser)
+            {
+
+            }*/
+
+
+            _context.Entry(dbUser).State = EntityState.Modified;
 
             try
             {
